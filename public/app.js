@@ -9,11 +9,12 @@ const configuration = {
         'stun:stun2.l.google.com:19302',
       ],
     },
+     
   ],
   iceCandidatePoolSize: 10,
 };
 
-let peerConnection = null;
+let peerConnection = null;   //lege variable aangemaakt waarin later nieuwe connectie word opgeslagen
 let localStream = null;
 let remoteStream = null;
 let roomDialog = null;
@@ -27,17 +28,29 @@ function init() {
   roomDialog = new mdc.dialog.MDCDialog(document.querySelector('#room-dialog'));
 }
 
-async function createRoom() {
-  document.querySelector('#createBtn').disabled = true;
-  document.querySelector('#joinBtn').disabled = true;
-  const db = firebase.firestore();
+async function createRoom() { // deze functie word aangeroepen zodra de gebruiker op 'createBtn' heeft geklikt
+  document.querySelector('#createBtn').disabled = true; // zodra de chatroom is aangemaakt word de button disabeled zodat niet nog een kamer kan worden aangemaakt
+  document.querySelector('#joinBtn').disabled = true; // zodra de chatroom is aangemaakt word de button disabeled, omdat je niet een kamer kan aanmaken en tegelijkertijd kan joinen
+  const db = firebase.firestore(); //  de chatroom sleutel word hier opgeslagen
 
-  console.log('Create PeerConnection with configuration: ', configuration);
-  peerConnection = new RTCPeerConnection(configuration);
+  console.log('Create PeerConnection with configuration: ', configuration); // meekijken om evebtueel te kunnen debuggen
+  peerConnection = new RTCPeerConnection(configuration); // nieuwe p2p connectie word aangemaakt, in configuartion word array meegegven die gegevens van STUN server bevat.
 
   registerPeerConnectionListeners();
 
-  // Add code for creating a room here
+// Added code below
+  const offer = await peerConnection.createOffer();
+await peerConnection.setLocalDescription(offer);
+
+const roomWithOffer = {
+    offer: {
+        type: offer.type,
+        sdp: offer.sdp
+    }
+}
+const roomRef = await db.collection('rooms').add(roomWithOffer);
+const roomId = roomRef.id;
+document.querySelector('#currentRoom').innerText = `Current room is ${roomId} - You are the caller!`
   
   // Code for creating room above
   
